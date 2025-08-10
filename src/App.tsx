@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { ArrowSquareOutIcon } from "@phosphor-icons/react";
 
+const HOSTING_URL = window.location.href.split("?")[0];
 interface ParsedURL {
   protocol: string;
   host: string;
@@ -131,6 +132,14 @@ export default function App() {
   const allSame =
     canCompare && allParams.every((p) => paramsEqual(p, allParams[0]));
 
+  const handleGoToUrl = (url: string) => {
+    window.open(url, "_blank");
+  };
+
+  const handleParseUrl = (url: string) => {
+    window.open(`${HOSTING_URL}?url1=${url}`, "_blank");
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4 font-sans">
       {urls.length < 3 && (
@@ -260,6 +269,27 @@ export default function App() {
                                         {`convert to local time`}
                                       </button>
                                     )}
+                                  {(new URL(v).protocol === "http:" ||
+                                    new URL(v).protocol === "https:") && (
+                                    <>
+                                      <button
+                                        className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
+                                        onClick={() => handleGoToUrl(v)}
+                                        type="button"
+                                      >
+                                        {`Go to url`}
+                                        <ArrowSquareOutIcon size={16} />
+                                      </button>
+                                      <button
+                                        className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
+                                        onClick={() => handleParseUrl(v)}
+                                        type="button"
+                                      >
+                                        {`Parse url`}
+                                        <ArrowSquareOutIcon size={16} />
+                                      </button>
+                                    </>
+                                  )}
                                 </div>
                               )}
                             </li>
