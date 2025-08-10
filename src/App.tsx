@@ -261,7 +261,7 @@ export default function App() {
                               ) : (
                                 <div className="ml-2 wrap-anywhere">
                                   {v}
-                                  {k == "ip" && (
+                                  {k.includes("ip") && (
                                     <button
                                       className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
                                       onClick={() => handleCheckIp(v)}
