@@ -207,16 +207,16 @@ export default function App() {
                   <div>{parsed[i]!.protocol}</div>
                 </div>
                 <div className="flex flex-row gap-2">
-                  <div className="font-medium bg-gray-100 w-24 px-1 rounded-sm">
+                  <div className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
                     Host
                   </div>
                   <div>{parsed[i]!.host}</div>
                 </div>
                 <div className="flex flex-row gap-2">
-                  <div className="font-medium bg-gray-100 w-24 px-1 rounded-sm">
+                  <div className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
                     Path
                   </div>
-                  <div>{parsed[i]!.path}</div>
+                  <div className="wrap-anywhere">{parsed[i]!.path}</div>
                 </div>
                 <div className="flex flex-row gap-2">
                   <span className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
