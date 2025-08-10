@@ -1,69 +1,111 @@
-# React + TypeScript + Vite
+# TS URL Parser
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+https://sue-url-parser.netlify.app
 
-Currently, two official plugins are available:
+A web-based URL parser and comparator built with **React**, **TypeScript**, and **TailwindCSS**, written with the help of [Cursor.ai](https://cursor.sh).
+It allows you to parse URLs, view their components, inspect query parameters (including formatted JSON), and compare multiple URLs side-by-side.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Demo
 
-## Expanding the ESLint configuration
+You can prefill URLs by adding them as query parameters in the address bar:
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+?url1=https://example.com?a=1&b=2&url2=https://example.com?a=1&b=3
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## ✨ Features
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+- **Parse URL Components**
+  Extracts and displays:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
+  - Protocol
+  - Host
+  - Path
+  - Query parameters (sorted alphabetically)
+
+- **Multiple URL Comparison**
+
+  - Compare up to **3 URLs** at once.
+  - Highlights whether parameter keys & values match across URLs.
+
+- **JSON Parameter Support**
+
+  - Automatically detects JSON strings in query parameters.
+  - Pretty-prints JSON with **Expand/Collapse** toggle.
+
+- **Parameter Utilities**
+
+  - **IP Lookup**: Opens IP information on [WhatIsMyIPAddress](https://whatismyipaddress.com).
+  - **Timestamp Conversion**: Converts Unix timestamps (10 or 13 digits) to local time.
+  - **URL Navigation**: Opens parameter values if they are valid URLs.
+  - **Recursive Parsing**: Opens the parser with a parameter URL preloaded.
+
+- **Prefill via Query String**
+
+  - Support for `?url1=...&url2=...&url3=...` to share preloaded comparisons.
+
+- **Responsive & Modern UI**
+
+  - Built with **TailwindCSS** for clean and responsive layouts.
+  - Minimalist, accessible, and mobile-friendly.
+
+## 🛠 Tech Stack
+
+- **Cursor.ai** – AI-assisted development
+- **React** – Frontend library for building the UI
+- **TypeScript** – Strongly typed JavaScript
+- **TailwindCSS** – Utility-first CSS framework
+- **Phosphor Icons** – For clean and consistent icons
+
+## 📦 Installation & Setup
+
+1. **Clone the repo**
+
+   ```bash
+   git clone https://github.com/your-username/url-parser.git
+   cd url-parser
+   ```
+
+2. **Install dependencies**
+
+   ```bash
+   npm install
+   # or
+   yarn install
+   ```
+
+3. **Start development server**
+
+   ```bash
+   npm run dev
+   ```
+
+4. **Build for production**
+
+   ```bash
+   npm run build
+   ```
+
+5. **Preview production build**
+
+   ```bash
+   npm run preview
+   ```
+
+## 🖼 Usage
+
+1. Paste one or more URLs into the provided fields.
+2. View parsed results:
+
+   - **Protocol** (e.g., `https`)
+   - **Host** (e.g., `example.com`)
+   - **Path** (e.g., `/path/to/page`)
+   - **Parameters** with value inspection.
+
+3. Compare URLs to check for parameter differences.
+4. Use the parameter action buttons:
+
+   - **Check IP**
+   - **Convert Timestamp**
+   - **Go to URL**
+   - **Parse URL**
