@@ -140,6 +140,18 @@ export default function App() {
     window.open(`${HOSTING_URL}?url1=${url}`, "_blank");
   };
 
+  const isValidUrl = (string: string) => {
+    let url;
+
+    try {
+      url = new URL(string);
+    } catch {
+      return false;
+    }
+
+    return url.protocol === "http:" || url.protocol === "https:";
+  };
+
   return (
     <div className="min-h-screen flex flex-col items-center p-4 font-sans">
       {urls.length < 3 && (
@@ -269,8 +281,7 @@ export default function App() {
                                         {`convert to local time`}
                                       </button>
                                     )}
-                                  {(new URL(v).protocol === "http:" ||
-                                    new URL(v).protocol === "https:") && (
+                                  {isValidUrl(v) && (
                                     <>
                                       <button
                                         className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
