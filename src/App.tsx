@@ -236,7 +236,6 @@ export default function App() {
                               <span className="shrink-0 w-34 wrap-anywhere font-monox font-semibold bg-gray-100 rounded-sm pl-2 pr-1 py-px">
                                 {k}
                               </span>
-                              {/* : */}
                               {isJson ? (
                                 <div className="ml-2">
                                   {isJson?.length >= 3 && (
@@ -261,16 +260,17 @@ export default function App() {
                               ) : (
                                 <div className="ml-2 wrap-anywhere">
                                   {v}
-                                  {k.includes("ip") && (
-                                    <button
-                                      className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
-                                      onClick={() => handleCheckIp(v)}
-                                      type="button"
-                                    >
-                                      check ip info{" "}
-                                      <ArrowSquareOutIcon size={16} />
-                                    </button>
-                                  )}
+                                  {k?.includes("ip") &&
+                                    (v?.includes(".") || v?.includes(":")) && (
+                                      <button
+                                        className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
+                                        onClick={() => handleCheckIp(v)}
+                                        type="button"
+                                      >
+                                        check ip info{" "}
+                                        <ArrowSquareOutIcon size={16} />
+                                      </button>
+                                    )}
                                   {k.includes("ts") &&
                                     (v.length == 10 || v.length == 13) && (
                                       <button
