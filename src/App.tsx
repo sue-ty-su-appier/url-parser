@@ -153,7 +153,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col items-center p-4 font-sans">
+    <div className="min-h-screen flex flex-col items-center p-4 font-inter">
       {urls.length < 3 && (
         <button
           className="absolute right-6 top-6 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg text-blue-400 hover:bg-blue-50 transition  min-w-[120px] max-w-xs flex-1 cursor-pointer self-end"
