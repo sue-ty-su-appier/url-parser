@@ -132,6 +132,30 @@ export default function App() {
   const allSame =
     canCompare && allParams.every((p) => paramsEqual(p, allParams[0]));
 
+  // Find parameter keys that differ between URLs
+  const getDifferentParamKeys = (): Set<string> => {
+    if (!canCompare || allSame) return new Set();
+
+    const allKeys = new Set<string>();
+    allParams.forEach((params) => {
+      Object.keys(params).forEach((key) => allKeys.add(key));
+    });
+
+    const differentKeys = new Set<string>();
+    allKeys.forEach((key) => {
+      const values = allParams
+        .map((params) => params[key])
+        .filter((v) => v !== undefined);
+      if (values.length > 1 && !values.every((v) => v === values[0])) {
+        differentKeys.add(key);
+      }
+    });
+
+    return differentKeys;
+  };
+
+  const differentParamKeys = getDifferentParamKeys();
+
   const handleGoToUrl = (url: string) => {
     window.open(url, "_blank");
   };
@@ -233,7 +257,13 @@ export default function App() {
                           const isOpen = jsonOpen[key];
                           return (
                             <li className="flex" key={k}>
-                              <span className="shrink-0 w-34 wrap-anywhere font-monox font-semibold bg-gray-100 rounded-sm pl-2 pr-1 py-px">
+                              <span
+                                className={`shrink-0 w-34 wrap-anywhere font-monox font-semibold bg-gray-100 rounded-sm pl-2 pr-1 py-px ${
+                                  differentParamKeys.has(k)
+                                    ? "text-red-700"
+                                    : ""
+                                }`}
+                              >
                                 {k}
                               </span>
                               {isJson ? (
