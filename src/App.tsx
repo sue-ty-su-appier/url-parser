@@ -133,28 +133,47 @@ export default function App() {
     canCompare && allParams.every((p) => paramsEqual(p, allParams[0]));
 
   // Find parameter keys that differ between URLs
-  const getDifferentParamKeys = (): Set<string> => {
-    if (!canCompare || allSame) return new Set();
+  const getDifferentParamKeys = (): {
+    missing: Set<string>;
+    valueChanged: Set<string>;
+  } => {
+    if (!canCompare || allSame)
+      return { missing: new Set(), valueChanged: new Set() };
 
     const allKeys = new Set<string>();
     allParams.forEach((params) => {
       Object.keys(params).forEach((key) => allKeys.add(key));
     });
 
-    const differentKeys = new Set<string>();
+    const missingKeys = new Set<string>();
+    const valueChangedKeys = new Set<string>();
+
     allKeys.forEach((key) => {
-      const values = allParams
-        .map((params) => params[key])
-        .filter((v) => v !== undefined);
-      if (values.length > 1 && !values.every((v) => v === values[0])) {
-        differentKeys.add(key);
+      // Check if this key exists in all URLs
+      const keyExistsInAll = allParams.every((params) =>
+        Object.prototype.hasOwnProperty.call(params, key)
+      );
+
+      if (!keyExistsInAll) {
+        // Key is missing from at least one URL - mark as missing
+        missingKeys.add(key);
+      } else {
+        // Key exists in all URLs, check if values differ
+        const values = allParams.map((params) => params[key]);
+        const hasValueDiff =
+          values.length > 1 && !values.every((v) => v === values[0]);
+
+        if (hasValueDiff) {
+          valueChangedKeys.add(key);
+        }
       }
     });
 
-    return differentKeys;
+    return { missing: missingKeys, valueChanged: valueChangedKeys };
   };
 
-  const differentParamKeys = getDifferentParamKeys();
+  const { missing: missingParamKeys, valueChanged: valueChangedParamKeys } =
+    getDifferentParamKeys();
 
   const handleGoToUrl = (url: string) => {
     window.open(url, "_blank");
@@ -258,10 +277,12 @@ export default function App() {
                           return (
                             <li className="flex" key={k}>
                               <span
-                                className={`shrink-0 w-34 wrap-anywhere font-monox font-semibold bg-gray-100 rounded-sm pl-2 pr-1 py-px ${
-                                  differentParamKeys.has(k)
-                                    ? "text-red-700"
-                                    : ""
+                                className={`shrink-0 w-34 wrap-anywhere font-semibold rounded-sm pl-2 pr-1 py-px ${
+                                  missingParamKeys.has(k)
+                                    ? "bg-red-100"
+                                    : valueChangedParamKeys.has(k)
+                                    ? "bg-blue-100"
+                                    : "bg-gray-100"
                                 }`}
                               >
                                 {k}
