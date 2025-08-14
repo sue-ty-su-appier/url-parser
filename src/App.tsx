@@ -202,7 +202,7 @@ export default function App() {
       </h1>
       {urls.length < 3 && (
         <button
-          className="mb-4 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg text-blue-400 hover:bg-blue-50 transition  min-w-[120px] max-w-xs flex-1 cursor-pointer self-end"
+          className="mb-4 h-8 w-32 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg text-blue-400 hover:bg-blue-50 transition max-w-xs cursor-pointer self-end"
           onClick={handleAdd}
           type="button"
           aria-label="Add URL"
