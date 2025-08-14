@@ -197,9 +197,12 @@ export default function App() {
 
   return (
     <div className="min-h-screen flex flex-col items-center p-4 font-inter">
+      <h1 className="text-3xl font-bold mb-x6 text-center rounded p-2">
+        TS URL Parser
+      </h1>
       {urls.length < 3 && (
         <button
-          className="absolute right-6 top-6 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg text-blue-400 hover:bg-blue-50 transition  min-w-[120px] max-w-xs flex-1 cursor-pointer self-end"
+          className="mb-4 flex items-center justify-center border-2 border-dashed border-blue-400 rounded-lg text-blue-400 hover:bg-blue-50 transition  min-w-[120px] max-w-xs flex-1 cursor-pointer self-end"
           onClick={handleAdd}
           type="button"
           aria-label="Add URL"
@@ -207,9 +210,30 @@ export default function App() {
           <span className="text-sm">+ compare url</span>
         </button>
       )}
-      <h1 className="text-3xl font-bold mb-6 text-center rounded p-2">
-        TS URL Parser
-      </h1>
+      {canCompare &&
+        (missingParamKeys.size > 0 || valueChangedParamKeys.size > 0) && (
+          <div className="mb-6 text-end self-end">
+            <div className="text-xs mb-2">Parameter Key Legend</div>
+            <div className="flex flex-wrap justify-center gap-4 text-xs">
+              {missingParamKeys.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-red-100 rounded border border-gray-300"></div>
+                  <span>Missing from some URLs</span>
+                </div>
+              )}
+              {valueChangedParamKeys.size > 0 && (
+                <div className="flex items-center gap-2">
+                  <div className="w-4 h-4 bg-blue-100 rounded border border-gray-300"></div>
+                  <span>Different values across URLs</span>
+                </div>
+              )}
+              <div className="flex items-center gap-2">
+                <div className="w-4 h-4 bg-gray-100 rounded border border-gray-300"></div>
+                <span>Same value across all URLs</span>
+              </div>
+            </div>
+          </div>
+        )}
       <div
         className={`${
           urls.length == 1 && "max-w-4xl"
