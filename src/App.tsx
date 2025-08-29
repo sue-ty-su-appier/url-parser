@@ -281,7 +281,7 @@ export default function App() {
             <div className="flex items-center gap-2">
               <label className="font-semibold">URL {i + 1}</label>
               <input
-                className="mr-4 border border-gray-200 ml-2 w-1/2 bg-gray-50x rounded-xs px-2 py-0.5 text-sm italic text-gray-600x focus:outline-nonex focus:ring focus:border-blue-400x"
+                className="mr-4 border-b border-gray-200 ml-2 w-3/4 bg-gray-50x rounded-xs px-2 py-0.5 text-sm italic text-gray-600 focus:outline-nonex focus:ring focus:border-blue-400"
                 placeholder="Note"
                 value={notes[i] || ""}
                 onChange={(e) => handleNoteChange(i, e.target.value)}
@@ -345,15 +345,19 @@ export default function App() {
                                 className={`shrink-0 w-34 wrap-anywhere font-semibold rounded-sm pl-2 pr-1 py-px ${
                                   missingParamKeys.has(k)
                                     ? "bg-red-100"
-                                    : valueChangedParamKeys.has(k)
-                                    ? "bg-blue-100"
                                     : "bg-gray-100"
                                 }`}
                               >
                                 {k}
                               </span>
                               {isJson ? (
-                                <div className="ml-2">
+                                <div
+                                  className={`ml-2 rounded-sm w-full ${
+                                    valueChangedParamKeys.has(k)
+                                      ? "bg-blue-100/50"
+                                      : ""
+                                  }`}
+                                >
                                   {isJson?.length >= 3 && (
                                     <button
                                       className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer"
@@ -374,7 +378,13 @@ export default function App() {
                                   )}
                                 </div>
                               ) : (
-                                <div className="ml-2 wrap-anywhere">
+                                <div
+                                  className={`ml-1 pl-1 wrap-anywhere w-full ${
+                                    valueChangedParamKeys.has(k)
+                                      ? "bg-blue-100/50 rounded-sm"
+                                      : ""
+                                  }`}
+                                >
                                   {v}
                                   {k?.includes("ip") &&
                                     (v?.includes(".") || v?.includes(":")) && (
