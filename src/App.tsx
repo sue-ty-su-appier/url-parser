@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { ArrowSquareOutIcon } from "@phosphor-icons/react";
+import { ArrowSquareOutIcon, XIcon } from "@phosphor-icons/react";
 
 const HOSTING_URL = window.location.href.split("?")[0];
 interface ParsedURL {
@@ -281,27 +281,26 @@ export default function App() {
             <div className="flex items-center gap-2">
               <label className="font-semibold">URL {i + 1}</label>
               <input
-                className="mr-4 flex-1 border border-gray-100 bg-gray-50 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring focus:border-blue-400"
-                placeholder="Free Note"
+                className="mr-4 border border-gray-200 ml-2 w-1/2 bg-gray-50x rounded-xs px-2 py-0.5 text-sm italic text-gray-600x focus:outline-nonex focus:ring focus:border-blue-400x"
+                placeholder="Note"
                 value={notes[i] || ""}
                 onChange={(e) => handleNoteChange(i, e.target.value)}
               />
             </div>
             <textarea
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:border-blue-400 text-sm"
-              // type="text"
               placeholder={`Enter URL ${i + 1}`}
               value={url}
               onChange={(e) => handleChange(i, e.target.value)}
             />
             {urls.length > 1 && (
               <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg font-semibold"
+                className="absolute top-4 right-2 text-gray-400 hover:text-red-500 text-lg font-semibold cursor-pointer"
                 onClick={() => handleRemove(i)}
                 aria-label="Remove URL"
                 type="button"
               >
-                x
+                <XIcon />
               </button>
             )}
             {url && !parsed[i] && (
