@@ -44,6 +44,16 @@ function getInitialUrls(): string[] {
   return urls.length > 0 ? urls : [""];
 }
 
+function getInitialNotes(): string[] {
+  const params = new URLSearchParams(window.location.search);
+  const notes = [
+    params.get("note1"),
+    params.get("note2"),
+    params.get("note3"),
+  ].filter(Boolean) as string[];
+  return notes;
+}
+
 function tryPrettifyJson(value: string): string | null {
   try {
     // Accepts both objects and arrays
@@ -62,20 +72,34 @@ export default function App() {
   const [parsed, setParsed] = useState<(ParsedURL | null)[]>([]);
   // Track toggle state for each JSON param: { [urlIdx-paramKey]: boolean }
   const [jsonOpen, setJsonOpen] = useState<Record<string, boolean>>({});
+  const [notes, setNotes] = useState<string[]>(getInitialNotes());
 
   useEffect(() => {
     setParsed(urls.map(parseUrl));
   }, [urls]);
 
-  // Sync URLs to query parameters
+  // Ensure notes length stays in sync with urls length
+  useEffect(() => {
+    setNotes((prev) => {
+      if (prev.length === urls.length) return prev;
+      if (prev.length < urls.length) {
+        return [...prev, ...Array(urls.length - prev.length).fill("")];
+      }
+      return prev.slice(0, urls.length);
+    });
+  }, [urls.length]);
+
+  // Sync URLs and notes to query parameters
   useEffect(() => {
     const params = new URLSearchParams();
     urls.forEach((url, i) => {
       if (url) params.set(`url${i + 1}`, url);
+      const note = notes[i];
+      if (note) params.set(`note${i + 1}`, note);
     });
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState(null, "", newUrl);
-  }, [urls]);
+  }, [urls, notes]);
 
   // Ensure jsonOpen state is initialized for new params (default open)
   useEffect(() => {
@@ -99,12 +123,22 @@ export default function App() {
     setUrls((prev) => prev.map((u, i) => (i === idx ? value : u)));
   };
 
+  const handleNoteChange = (idx: number, value: string) => {
+    setNotes((prev) => prev.map((n, i) => (i === idx ? value : n)));
+  };
+
   const handleAdd = () => {
-    if (urls.length < 3) setUrls((prev) => [...prev, ""]);
+    if (urls.length < 3) {
+      setUrls((prev) => [...prev, ""]);
+      setNotes((prev) => [...prev, ""]);
+    }
   };
 
   const handleRemove = (idx: number) => {
-    if (urls.length > 1) setUrls((prev) => prev.filter((_, i) => i !== idx));
+    if (urls.length > 1) {
+      setUrls((prev) => prev.filter((_, i) => i !== idx));
+      setNotes((prev) => prev.filter((_, i) => i !== idx));
+    }
   };
 
   const handleToggleJson = (urlIdx: number, paramKey: string) => {
@@ -244,7 +278,15 @@ export default function App() {
             key={i}
             className="bg-white rounded-lg shadow p-4 flex flex-col gap-2 relative min-w-[260px] flex-1"
           >
-            <label className="font-semibold">URL {i + 1}</label>
+            <div className="flex items-center gap-2">
+              <label className="font-semibold">URL {i + 1}</label>
+              <input
+                className="mr-4 flex-1 border border-gray-100 bg-gray-50 rounded px-2 py-0.5 text-sm focus:outline-none focus:ring focus:border-blue-400"
+                placeholder="Free Note"
+                value={notes[i] || ""}
+                onChange={(e) => handleNoteChange(i, e.target.value)}
+              />
+            </div>
             <textarea
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:border-blue-400 text-sm"
               // type="text"
@@ -254,7 +296,7 @@ export default function App() {
             />
             {urls.length > 1 && (
               <button
-                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg font-bold"
+                className="absolute top-2 right-2 text-gray-400 hover:text-red-500 text-lg font-semibold"
                 onClick={() => handleRemove(i)}
                 aria-label="Remove URL"
                 type="button"
@@ -407,8 +449,10 @@ export default function App() {
       </div>
       <div className="mt-8 text-xs text-gray-400 text-center">
         You can prefill URLs using{" "}
-        <span className="font-mono">?url1=...&url2=...&url3=...</span> in the
-        address bar.
+        <span className="font-mono">
+          ?url1=...&url2=...&url3=...&note1=...&note2=...&note3=...
+        </span>{" "}
+        in the address bar.
       </div>
     </div>
   );
