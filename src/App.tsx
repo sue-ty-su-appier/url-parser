@@ -345,6 +345,8 @@ export default function App() {
                                 className={`shrink-0 w-34 wrap-anywhere font-semibold rounded-sm pl-2 pr-1 py-px ${
                                   missingParamKeys.has(k)
                                     ? "bg-red-100"
+                                    : valueChangedParamKeys.has(k)
+                                    ? "bg-blue-100"
                                     : "bg-gray-100"
                                 }`}
                               >
