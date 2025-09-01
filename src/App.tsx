@@ -1,5 +1,9 @@
 import { useState, useEffect } from "react";
 import { ArrowSquareOutIcon, XIcon } from "@phosphor-icons/react";
+import { perf } from "./main";
+import { trace } from "firebase/performance";
+import { analytics } from "./main";
+import { logEvent } from "firebase/analytics";
 
 const HOSTING_URL = window.location.href.split("?")[0];
 interface ParsedURL {
@@ -11,6 +15,11 @@ interface ParsedURL {
 
 function parseUrl(url: string): ParsedURL | null {
   try {
+    if (analytics) {
+      logEvent(analytics, "parse_url", {
+        url: url,
+      });
+    }
     const u = new URL(url);
     const params: Record<string, string> = {};
     Array.from(u.searchParams.entries())
@@ -75,7 +84,16 @@ export default function App() {
   const [notes, setNotes] = useState<string[]>(getInitialNotes());
 
   useEffect(() => {
-    setParsed(urls.map(parseUrl));
+    if (perf) {
+      const parsedTrace = trace(perf, "parsed_urls_change");
+      parsedTrace.start();
+
+      setParsed(urls.map(parseUrl));
+
+      parsedTrace.stop();
+    } else {
+      setParsed(urls.map(parseUrl));
+    }
   }, [urls]);
 
   // Ensure notes length stays in sync with urls length
