@@ -231,8 +231,11 @@ export default function App() {
     window.open(url, "_blank");
   };
 
-  const handleParseUrl = (url: string) => {
-    window.open(`${HOSTING_URL}?url1=${url}`, "_blank");
+  const handleParseUrl = (raw: string) => {
+    const params = new URLSearchParams();
+    params.set("url1", raw); // safely encodes ? & = etc.
+    const target = `${HOSTING_URL}?${params.toString()}`;
+    window.open(target, "_blank");
   };
 
   const isValidUrl = (string: string) => {
