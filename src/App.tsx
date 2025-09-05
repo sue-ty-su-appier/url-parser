@@ -11,6 +11,7 @@ interface ParsedURL {
   host: string;
   path: string;
   params: Record<string, string>;
+  rawParams: Record<string, string>;
 }
 
 function parseUrl(url: string): ParsedURL | null {
@@ -22,14 +23,30 @@ function parseUrl(url: string): ParsedURL | null {
     }
     const u = new URL(url);
     const params: Record<string, string> = {};
+    const rawParams: Record<string, string> = {};
+
+    // Extract raw encoded parameters from the URL string
+    const searchParams = u.search.substring(1); // Remove the '?'
+    const rawParamPairs = searchParams.split("&");
+    rawParamPairs.forEach((pair) => {
+      const [key, ...valueParts] = pair.split("=");
+      if (key) {
+        const rawValue = valueParts.join("="); // Rejoin in case value contains '='
+        rawParams[key] = rawValue;
+      }
+    });
+
+    // Get decoded parameters
     Array.from(u.searchParams.entries())
       .sort(([a], [b]) => a.localeCompare(b))
       .forEach(([k, v]) => (params[k] = v));
+
     return {
       protocol: u.protocol.replace(":", ""),
       host: u.host,
       path: u.pathname,
       params,
+      rawParams,
     };
   } catch {
     return null;
@@ -179,10 +196,11 @@ export default function App() {
   };
 
   const allParams = parsed.filter(Boolean).map((p) => p!.params);
+  const allRawParams = parsed.filter(Boolean).map((p) => p!.rawParams);
   const canCompare = allParams.length > 1;
   //  && allParams.every((p) => Object.keys(p).length > 0);
   const allSame =
-    canCompare && allParams.every((p) => paramsEqual(p, allParams[0]));
+    canCompare && allRawParams.every((p) => paramsEqual(p, allRawParams[0]));
 
   // Find parameter keys that differ between URLs
   const getDifferentParamKeys = (): {
@@ -193,7 +211,7 @@ export default function App() {
       return { missing: new Set(), valueChanged: new Set() };
 
     const allKeys = new Set<string>();
-    allParams.forEach((params) => {
+    allRawParams.forEach((params) => {
       Object.keys(params).forEach((key) => allKeys.add(key));
     });
 
@@ -202,7 +220,7 @@ export default function App() {
 
     allKeys.forEach((key) => {
       // Check if this key exists in all URLs
-      const keyExistsInAll = allParams.every((params) =>
+      const keyExistsInAll = allRawParams.every((params) =>
         Object.prototype.hasOwnProperty.call(params, key)
       );
 
@@ -211,7 +229,7 @@ export default function App() {
         missingKeys.add(key);
       } else {
         // Key exists in all URLs, check if values differ
-        const values = allParams.map((params) => params[key]);
+        const values = allRawParams.map((params) => params[key]);
         const hasValueDiff =
           values.length > 1 && !values.every((v) => v === values[0]);
 
@@ -357,6 +375,7 @@ export default function App() {
                     ) : (
                       <ul className="flex flex-col gap-y-1 list-none">
                         {Object.entries(parsed[i]!.params).map(([k, v]) => {
+                          const rawValue = parsed[i]!.rawParams[k] || v;
                           const isJson = tryPrettifyJson(v);
                           const key = `${i}-${k}`;
                           const isOpen = jsonOpen[key];
@@ -408,7 +427,14 @@ export default function App() {
                                       : ""
                                   }`}
                                 >
-                                  {v}
+                                  <div className="text-sm font-mono">
+                                    {rawValue}
+                                  </div>
+                                  {rawValue !== v && (
+                                    <div className="text-xs text-gray-500">
+                                      Decoded: {v}
+                                    </div>
+                                  )}
                                   {k?.includes("ip") &&
                                     (v?.includes(".") || v?.includes(":")) && (
                                       <button
