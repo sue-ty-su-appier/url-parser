@@ -187,14 +187,6 @@ export default function App() {
     window.open(`https://whatismyipaddress.com/ip/${ip}`, "_blank");
   };
 
-  const handleTimestamp = (ts: string) => {
-    if (ts?.length == 10) {
-      ts = ts.concat("000");
-    }
-    const date = new Date(Number(ts));
-    window.alert(`${date.toString()}`);
-  };
-
   const allParams = parsed.filter(Boolean).map((p) => p!.params);
   const allRawParams = parsed.filter(Boolean).map((p) => p!.rawParams);
   const canCompare = allParams.length > 1;
@@ -266,6 +258,19 @@ export default function App() {
     }
 
     return url.protocol === "http:" || url.protocol === "https:";
+  };
+
+  const formatTimestamp = (timestamp: string): string => {
+    try {
+      let ts = timestamp;
+      if (ts?.length === 10) {
+        ts = ts.concat("000");
+      }
+      const date = new Date(Number(ts));
+      return date.toString();
+    } catch {
+      return "Invalid timestamp";
+    }
   };
 
   return (
@@ -451,13 +456,14 @@ export default function App() {
                                     )}
                                   {k.includes("ts") &&
                                     (v.length == 10 || v.length == 13) && (
-                                      <button
-                                        className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer inline-flex"
-                                        onClick={() => handleTimestamp(v)}
-                                        type="button"
-                                      >
-                                        {`convert to local time`}
-                                      </button>
+                                      <div className="text-sm text-gray-500">
+                                        <span className="bg-emerald-100/30 text-emerald-700/80 px-1.5 py-px mr-1 rounded-xs text-xs">
+                                          Local time
+                                        </span>
+                                        <span className="text-xs">
+                                          {formatTimestamp(v)}
+                                        </span>
+                                      </div>
                                     )}
                                   {isValidUrl(v) && (
                                     <>
