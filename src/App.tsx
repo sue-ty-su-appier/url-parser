@@ -369,11 +369,11 @@ export default function App() {
                   <span className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
                     Parameters
                   </span>
-                  <div>
+                  <div className="w-full">
                     {Object.keys(parsed[i]!.params).length === 0 ? (
                       <span className="ml-1x">None</span>
                     ) : (
-                      <ul className="flex flex-col gap-y-1 list-none">
+                      <ul className="flex flex-col gap-y-1 list-none w-full">
                         {Object.entries(parsed[i]!.params).map(([k, v]) => {
                           const rawValue = parsed[i]!.rawParams[k] || v;
                           const isJson = tryPrettifyJson(v);
@@ -427,12 +427,15 @@ export default function App() {
                                       : ""
                                   }`}
                                 >
-                                  <div className="text-sm font-mono">
+                                  <div className="text-sm font-monox font-thinx">
                                     {rawValue}
                                   </div>
                                   {rawValue !== v && (
-                                    <div className="text-xs text-gray-500">
-                                      Decoded: {v}
+                                    <div className="text-sm text-gray-500">
+                                      <span className="bg-emerald-100/30 text-emerald-700/80 px-1.5 py-px mr-1 rounded-xs text-xs">
+                                        Decoded
+                                      </span>
+                                      {v}
                                     </div>
                                   )}
                                   {k?.includes("ip") &&
