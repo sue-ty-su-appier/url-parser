@@ -12,6 +12,12 @@ interface ParsedURL {
   path: string;
   params: Record<string, string>;
   rawParams: Record<string, string>;
+  duplicateKeys: Set<string>;
+  allParamEntries: Array<{
+    key: string;
+    rawValue: string;
+    decodedValue: string;
+  }>;
 }
 
 function parseUrl(url: string): ParsedURL | null {
@@ -24,22 +30,62 @@ function parseUrl(url: string): ParsedURL | null {
     const u = new URL(url);
     const params: Record<string, string> = {};
     const rawParams: Record<string, string> = {};
+    const keyCounts: Record<string, number> = {};
+    const duplicateKeys = new Set<string>();
+    const allParamEntries: Array<{
+      key: string;
+      rawValue: string;
+      decodedValue: string;
+    }> = [];
 
-    // Extract raw encoded parameters from the URL string
+    // Extract raw encoded parameters from the URL string (preserving order and duplicates)
     const searchParams = u.search.substring(1); // Remove the '?'
     const rawParamPairs = searchParams.split("&");
+
     rawParamPairs.forEach((pair) => {
       const [key, ...valueParts] = pair.split("=");
       if (key) {
         const rawValue = valueParts.join("="); // Rejoin in case value contains '='
+
+        // Count occurrences of each key
+        keyCounts[key] = (keyCounts[key] || 0) + 1;
+        if (keyCounts[key] > 1) {
+          duplicateKeys.add(key);
+        }
+
+        // Store the last value (standard URL behavior) for backward compatibility
         rawParams[key] = rawValue;
+
+        // Decode the value for display
+        let decodedValue = rawValue;
+        try {
+          decodedValue = decodeURIComponent(rawValue);
+        } catch {
+          // If decoding fails, use raw value
+          decodedValue = rawValue;
+        }
+
+        // Store all entries in order
+        allParamEntries.push({
+          key,
+          rawValue,
+          decodedValue,
+        });
       }
     });
 
-    // Get decoded parameters
-    Array.from(u.searchParams.entries())
-      .sort(([a], [b]) => a.localeCompare(b))
-      .forEach(([k, v]) => (params[k] = v));
+    // Get decoded parameters (for backward compatibility)
+    Array.from(u.searchParams.entries()).forEach(([k, v]) => (params[k] = v));
+
+    // Sort allParamEntries alphabetically by key, then by value for duplicate keys
+    allParamEntries.sort((a, b) => {
+      const keyCompare = a.key.localeCompare(b.key);
+      if (keyCompare !== 0) {
+        return keyCompare;
+      }
+      // For duplicate keys, sort by raw value
+      return a.rawValue.localeCompare(b.rawValue);
+    });
 
     return {
       protocol: u.protocol.replace(":", ""),
@@ -47,6 +93,8 @@ function parseUrl(url: string): ParsedURL | null {
       path: u.pathname,
       params,
       rawParams,
+      duplicateKeys,
+      allParamEntries,
     };
   } catch {
     return null;
@@ -141,8 +189,8 @@ export default function App() {
     const newJsonOpen: Record<string, boolean> = { ...jsonOpen };
     parsed.forEach((p, urlIdx) => {
       if (!p) return;
-      Object.keys(p.params).forEach((paramKey) => {
-        const key = `${urlIdx}-${paramKey}`;
+      p.allParamEntries.forEach((entry, entryIdx) => {
+        const key = `${urlIdx}-${entry.key}-${entryIdx}`;
         if (!(key in newJsonOpen)) {
           newJsonOpen[key] = true;
         }
@@ -176,10 +224,9 @@ export default function App() {
     }
   };
 
-  const handleToggleJson = (urlIdx: number, paramKey: string) => {
+  const handleToggleJson = (fullKey: string) => {
     setJsonOpen((prev) => {
-      const key = `${urlIdx}-${paramKey}`;
-      return { ...prev, [key]: !prev[key] };
+      return { ...prev, [fullKey]: !prev[fullKey] };
     });
   };
 
@@ -375,19 +422,20 @@ export default function App() {
                     Parameters
                   </span>
                   <div className="w-full">
-                    {Object.keys(parsed[i]!.params).length === 0 ? (
+                    {parsed[i]!.allParamEntries.length === 0 ? (
                       <span className="ml-1x">None</span>
                     ) : (
                       <ul className="flex flex-col gap-y-1 list-none w-full">
-                        {Object.entries(parsed[i]!.params).map(([k, v]) => {
-                          const rawValue = parsed[i]!.rawParams[k] || v;
+                        {parsed[i]!.allParamEntries.map((entry, entryIdx) => {
+                          const { key: k, rawValue, decodedValue: v } = entry;
                           const isJson = tryPrettifyJson(v);
-                          const key = `${i}-${k}`;
+                          const key = `${i}-${k}-${entryIdx}`;
                           const isOpen = jsonOpen[key];
+                          const isDuplicate = parsed[i]!.duplicateKeys.has(k);
                           return (
-                            <li className="flex" key={k}>
+                            <li className="flex" key={key}>
                               <span
-                                className={`shrink-0 w-34 wrap-anywhere font-semibold rounded-sm pl-2 pr-1 py-px ${
+                                className={`shrink-0 w-34 wrap-anywhere font-semibold rounded-sm pl-2 pr-1 py-px flex items-center gap-1 ${
                                   missingParamKeys.has(k)
                                     ? "bg-red-100"
                                     : valueChangedParamKeys.has(k)
@@ -396,6 +444,14 @@ export default function App() {
                                 }`}
                               >
                                 {k}
+                                {isDuplicate && (
+                                  <span
+                                    className="text-xs bg-yellow-400x text-yellow-900 px-1 rounded"
+                                    title="This parameter key appears multiple times in the URL"
+                                  >
+                                    ⚠️
+                                  </span>
+                                )}
                               </span>
                               {isJson ? (
                                 <div
@@ -408,7 +464,7 @@ export default function App() {
                                   {isJson?.length >= 3 && (
                                     <button
                                       className="ml-2 text-xs text-blue-500 underline hover:text-blue-700 cursor-pointer"
-                                      onClick={() => handleToggleJson(i, k)}
+                                      onClick={() => handleToggleJson(key)}
                                       type="button"
                                     >
                                       {isOpen ? "Collapse" : "Expand"}
