@@ -510,7 +510,9 @@ export default function App() {
                                         <ArrowSquareOutIcon size={16} />
                                       </button>
                                     )}
-                                  {k.includes("ts") &&
+                                  {(k.includes("ts") ||
+                                    k.includes("timestamp") ||
+                                    k == "x_attributed_touch_hour") &&
                                     (v.length == 10 || v.length == 13) && (
                                       <div className="text-sm text-gray-500">
                                         <span className="bg-emerald-100/30 text-emerald-700/80 px-1.5 py-px mr-1 rounded-xs text-xs">
