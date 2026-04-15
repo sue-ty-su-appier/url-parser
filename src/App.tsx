@@ -6,6 +6,10 @@ import { analytics } from "./main";
 import { logEvent } from "firebase/analytics";
 
 const HOSTING_URL = window.location.href.split("?")[0];
+
+/** Prepended when “append temp protocol & host” is checked so query-only input parses. */
+const TEMP_URL_FOR_PARSING_PREFIX = "https://temp-url-for-parsing?";
+
 interface ParsedURL {
   protocol: string;
   host: string;
@@ -101,6 +105,27 @@ function parseUrl(url: string): ParsedURL | null {
   }
 }
 
+function isAbsoluteUrl(raw: string): boolean {
+  const trimmed = raw.trim();
+  if (!trimmed) return false;
+  try {
+    new URL(trimmed);
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Value used for parsing and for url1/url2/url3 when append is on. */
+function effectiveUrlForRow(raw: string, appendTemp: boolean): string {
+  const trimmed = raw.trim();
+  if (!trimmed) return raw;
+  if (!appendTemp) return raw;
+  if (isAbsoluteUrl(raw)) return raw;
+  const body = trimmed.startsWith("?") ? trimmed.slice(1) : trimmed;
+  return `${TEMP_URL_FOR_PARSING_PREFIX}${body}`;
+}
+
 function paramsEqual(a: Record<string, string>, b: Record<string, string>) {
   const aKeys = Object.keys(a);
   const bKeys = Object.keys(b);
@@ -108,14 +133,25 @@ function paramsEqual(a: Record<string, string>, b: Record<string, string>) {
   return aKeys.every((k) => b[k] === a[k]);
 }
 
-function getInitialUrls(): string[] {
+function getInitialUrlRows(): { urls: string[]; appendTempHost: boolean[] } {
   const params = new URLSearchParams(window.location.search);
-  const urls = [
-    params.get("url1"),
-    params.get("url2"),
-    params.get("url3"),
-  ].filter(Boolean) as string[];
-  return urls.length > 0 ? urls : [""];
+  const urls: string[] = [];
+  const appendTempHost: boolean[] = [];
+  for (let i = 1; i <= 3; i++) {
+    const v = params.get(`url${i}`);
+    if (!v) continue;
+    if (v.startsWith(TEMP_URL_FOR_PARSING_PREFIX)) {
+      urls.push(v.slice(TEMP_URL_FOR_PARSING_PREFIX.length));
+      appendTempHost.push(true);
+    } else {
+      urls.push(v);
+      appendTempHost.push(false);
+    }
+  }
+  if (urls.length === 0) {
+    return { urls: [""], appendTempHost: [false] };
+  }
+  return { urls, appendTempHost };
 }
 
 function getInitialNotes(): string[] {
@@ -142,7 +178,11 @@ function tryPrettifyJson(value: string): string | null {
 }
 
 export default function App() {
-  const [urls, setUrls] = useState<string[]>(getInitialUrls());
+  const initialRows = getInitialUrlRows();
+  const [urls, setUrls] = useState<string[]>(initialRows.urls);
+  const [appendTempHost, setAppendTempHost] = useState<boolean[]>(
+    initialRows.appendTempHost,
+  );
   const [parsed, setParsed] = useState<(ParsedURL | null)[]>([]);
   // Track toggle state for each JSON param: { [urlIdx-paramKey]: boolean }
   const [jsonOpen, setJsonOpen] = useState<Record<string, boolean>>({});
@@ -153,13 +193,21 @@ export default function App() {
       const parsedTrace = trace(perf, "parsed_urls_change");
       parsedTrace.start();
 
-      setParsed(urls.map(parseUrl));
+      setParsed(
+        urls.map((u, i) =>
+          parseUrl(effectiveUrlForRow(u, appendTempHost[i] ?? false)),
+        ),
+      );
 
       parsedTrace.stop();
     } else {
-      setParsed(urls.map(parseUrl));
+      setParsed(
+        urls.map((u, i) =>
+          parseUrl(effectiveUrlForRow(u, appendTempHost[i] ?? false)),
+        ),
+      );
     }
-  }, [urls]);
+  }, [urls, appendTempHost]);
 
   // Ensure notes length stays in sync with urls length
   useEffect(() => {
@@ -172,17 +220,41 @@ export default function App() {
     });
   }, [urls.length]);
 
+  // Ensure appendTempHost length stays in sync with urls length
+  useEffect(() => {
+    setAppendTempHost((prev) => {
+      if (prev.length === urls.length) return prev;
+      if (prev.length < urls.length) {
+        return [...prev, ...Array(urls.length - prev.length).fill(false)];
+      }
+      return prev.slice(0, urls.length);
+    });
+  }, [urls.length]);
+
+  // Clear append when this row becomes a valid absolute URL (checkbox is hidden)
+  useEffect(() => {
+    setAppendTempHost((prev) => {
+      if (prev.length !== urls.length) return prev;
+      const next = prev.map((a, i) => {
+        const raw = urls[i] ?? "";
+        return raw.trim() !== "" && isAbsoluteUrl(raw) ? false : a;
+      });
+      return next.every((v, i) => v === prev[i]) ? prev : next;
+    });
+  }, [urls]);
+
   // Sync URLs and notes to query parameters
   useEffect(() => {
     const params = new URLSearchParams();
     urls.forEach((url, i) => {
-      if (url) params.set(`url${i + 1}`, url);
+      const effective = effectiveUrlForRow(url, appendTempHost[i] ?? false);
+      if (effective.trim()) params.set(`url${i + 1}`, effective);
       const note = notes[i];
       if (note) params.set(`note${i + 1}`, note);
     });
     const newUrl = `${window.location.pathname}?${params.toString()}`;
     window.history.replaceState(null, "", newUrl);
-  }, [urls, notes]);
+  }, [urls, notes, appendTempHost]);
 
   // Ensure jsonOpen state is initialized for new params (default open)
   useEffect(() => {
@@ -214,6 +286,7 @@ export default function App() {
     if (urls.length < 3) {
       setUrls((prev) => [...prev, ""]);
       setNotes((prev) => [...prev, ""]);
+      setAppendTempHost((prev) => [...prev, false]);
     }
   };
 
@@ -221,7 +294,12 @@ export default function App() {
     if (urls.length > 1) {
       setUrls((prev) => prev.filter((_, i) => i !== idx));
       setNotes((prev) => prev.filter((_, i) => i !== idx));
+      setAppendTempHost((prev) => prev.filter((_, i) => i !== idx));
     }
+  };
+
+  const handleAppendTempChange = (idx: number, checked: boolean) => {
+    setAppendTempHost((prev) => prev.map((a, i) => (i === idx ? checked : a)));
   };
 
   const handleToggleJson = (fullKey: string) => {
@@ -260,7 +338,7 @@ export default function App() {
     allKeys.forEach((key) => {
       // Check if this key exists in all URLs
       const keyExistsInAll = allRawParams.every((params) =>
-        Object.prototype.hasOwnProperty.call(params, key)
+        Object.prototype.hasOwnProperty.call(params, key),
       );
 
       if (!keyExistsInAll) {
@@ -378,6 +456,17 @@ export default function App() {
                 onChange={(e) => handleNoteChange(i, e.target.value)}
               />
             </div>
+            {url.trim() !== "" && !isAbsoluteUrl(url) && (
+              <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  className="shrink-0"
+                  checked={appendTempHost[i] ?? false}
+                  onChange={(e) => handleAppendTempChange(i, e.target.checked)}
+                />
+                <span>append temporary protocol &amp; host</span>
+              </label>
+            )}
             <textarea
               className="border rounded px-2 py-1 focus:outline-none focus:ring focus:border-blue-400 text-sm"
               placeholder={`Enter URL ${i + 1}`}
@@ -439,8 +528,8 @@ export default function App() {
                                   missingParamKeys.has(k)
                                     ? "bg-red-100"
                                     : valueChangedParamKeys.has(k)
-                                    ? "bg-blue-100"
-                                    : "bg-gray-100"
+                                      ? "bg-blue-100"
+                                      : "bg-gray-100"
                                 }`}
                               >
                                 {k}
