@@ -312,12 +312,16 @@ export default function App() {
     window.open(`https://whatismyipaddress.com/ip/${ip}`, "_blank");
   };
 
-  const allParams = parsed.filter(Boolean).map((p) => p!.params);
-  const allRawParams = parsed.filter(Boolean).map((p) => p!.rawParams);
+  const validParsedRows = parsed.filter((p): p is ParsedURL => p !== null);
+  const allParams = validParsedRows.map((p) => p.params);
+  const allRawParams = validParsedRows.map((p) => p.rawParams);
   const canCompare = allParams.length > 1;
   //  && allParams.every((p) => Object.keys(p).length > 0);
   const allSame =
     canCompare && allRawParams.every((p) => paramsEqual(p, allRawParams[0]));
+  const pathDiffersAcrossUrls =
+    validParsedRows.length > 1 &&
+    !validParsedRows.every((p) => p.path === validParsedRows[0].path);
 
   // Find parameter keys that differ between URLs
   const getDifferentParamKeys = (): {
@@ -501,10 +505,18 @@ export default function App() {
                   <div>{parsed[i]!.host}</div>
                 </div>
                 <div className="flex flex-row gap-2">
-                  <div className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
+                  <div className={`font-medium w-24 px-1 rounded-sm shrink-0 ${pathDiffersAcrossUrls ? "bg-blue-100" : "bg-gray-100"}`}>
                     Path
                   </div>
-                  <div className="wrap-anywhere">{parsed[i]!.path}</div>
+                  <div
+                    className={`wrap-anywhere w-full ${
+                      pathDiffersAcrossUrls
+                        ? "bg-blue-100/50 rounded-sm px-1 py-px"
+                        : ""
+                    }`}
+                  >
+                    {parsed[i]!.path}
+                  </div>
                 </div>
                 <div className="flex flex-row gap-2">
                   <span className="font-medium bg-gray-100 w-24 px-1 rounded-sm shrink-0">
