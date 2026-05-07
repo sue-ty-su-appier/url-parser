@@ -511,7 +511,7 @@ export default function App() {
                   <div
                     className={`wrap-anywhere w-full ${
                       pathDiffersAcrossUrls
-                        ? "bg-blue-100/50 rounded-sm px-1 py-px"
+                        ? "bg-blue-100/50 rounded-sm px-1"
                         : ""
                     }`}
                   >
